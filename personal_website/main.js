@@ -1,7 +1,8 @@
-import './style.css'
-
+import './style.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
@@ -13,11 +14,19 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 camera.position.setZ(50);
+const raycaster = new THREE.Raycaster();
 
-const controls = new OrbitControls( camera, renderer.domElement );
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0px';
+labelRenderer.domElement.style.left = '0'; 
+document.body.appendChild(labelRenderer.domElement);
+labelRenderer.domElement.style.pointerEvents = 'none'
+
 
 const light = new THREE.PointLight(0xffffff, 50, 0, 1);
-light.position.set(80,0,80);
+light.position.set(70,0,70);
 
 const ambientLight = new THREE.AmbientLight(0xaaaaaa)
 scene.add(light, ambientLight);
@@ -28,20 +37,85 @@ const planet = new THREE.Mesh( geometry, material );
 scene.add( planet );
 planet.rotateZ(6);
 
-function addPinToSphere(radius, height, radiusTop, radiusBottom, division, num) {
+
+const controls = new OrbitControls( camera, renderer.domElement );
+controls.enablePan = false;
+controls.enableRotate = false;
+let isDragging = false;
+const pointer = new THREE.Vector2();
+let previousMousePosition = {
+    x: 0,
+    y: 0
+};
+controls.minDistance = 100;
+controls.maxDistance = 400;
+controls.minPolarAngle = Math.PI * 0.25;
+controls.maxPolarAngle = Math.PI * 0.75;
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+
+renderer.domElement.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  previousMousePosition = {
+      x: e.clientX,
+      y: e.clientY
+  };
+});
+
+renderer.domElement.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+
+// rotates only the planet when the user drags the mouse
+const rotationSpeed = 0.01;
+renderer.domElement.addEventListener('mousemove', (e) => {
+  if (isDragging) {
+    const deltaMove = {
+      x: e.clientX - previousMousePosition.x,
+      y: e.clientY - previousMousePosition.y,
+    };
+
+    const yRotation = new THREE.Quaternion().setFromAxisAngle(
+      new THREE.Vector3(0, 1, 0),
+      deltaMove.x * rotationSpeed
+    );
+
+    const cameraRight = new THREE.Vector3();
+    camera.getWorldDirection(cameraRight).cross(new THREE.Vector3(0, 1, 0)).normalize();
+    const xRotation = new THREE.Quaternion().setFromAxisAngle(
+      cameraRight,
+      deltaMove.y * rotationSpeed
+    );
+
+    planet.quaternion.multiplyQuaternions(yRotation, planet.quaternion);
+    planet.quaternion.multiplyQuaternions(xRotation, planet.quaternion);
+
+    previousMousePosition = {
+      x: e.clientX,
+      y: e.clientY,
+    };
+  }
+});
+
+window.addEventListener('click', (event) => {
+  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+});
+
+const pins = [];
+
+function addPinToSphere(radius, height, radiusTop, radiusBottom, division, num, labelText) {
   const cylGeometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, 32);
-  const cylMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+  const cylMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
   const cylinder = new THREE.Mesh(cylGeometry, cylMaterial);
 
-  const sphGeometry = new THREE.SphereGeometry(2, 10, 10);
+  const sphGeometry = new THREE.SphereGeometry(radiusTop + 1, 10, 10);
   const sphMaterial = new THREE.MeshStandardMaterial({color: 0xff0000});
   const sphere = new THREE.Mesh(sphGeometry, sphMaterial);
-  
-
   const theta = (num/division) * Math.PI * 2;
   const phi = ((Math.random() *0.5) + 0.3) * Math.PI;
 
-  sphere.position.set(0, height / 2, 0);
+  sphere.position.set(0, height/2, 0);
   cylinder.position.set(
     radius * Math.sin(phi) * Math.cos(theta),
     radius * Math.sin(phi) * Math.sin(theta),
@@ -52,13 +126,26 @@ function addPinToSphere(radius, height, radiusTop, radiusBottom, division, num) 
   const direction = new THREE.Vector3().subVectors(cylinder.position, sphere.position).normalize();
   cylinder.quaternion.setFromUnitVectors(up, direction);
 
+  const labelDiv = document.createElement('div');
+  labelDiv.className = 'label';
+  labelDiv.textContent = labelText;
+  const label = new CSS2DObject(labelDiv);
+  label.position.set(0, height/2 + 4, 0);
+
+
+
+  sphere.add(label);
   cylinder.add(sphere);
   planet.add(cylinder);
+  pins.push(cylinder);
+  pins.push(sphere);
+
 }
 
-for (let i = 0; i < 3; i++) {
-  addPinToSphere(50, 10, 1, 1, 3, i);
-}
+// adding pins that represent pages
+addPinToSphere(50, 10, 0.5, 0.5, 3, 1, "About Me");
+addPinToSphere(50, 10, 0.5, 0.5, 3, 2, "Porfolio");
+addPinToSphere(50, 10, 0.5, 0.5, 3, 3, "Contact");
 
 
 
@@ -68,7 +155,7 @@ function addBasicStar(){
   const material = new THREE.MeshStandardMaterial({color: 0xffffff});
   const star = new THREE.Mesh(geometry, material);
 
-  const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(500));
+  const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(400));
   star.position.set(x, y, z);
   scene.add(star);
 }
@@ -79,7 +166,7 @@ function addPulsingStar() {
   const material = new THREE.MeshBasicMaterial({color: 0xffff00});
   const star = new THREE.Mesh(geometry, material);
   
-  const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(500));
+  const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(400));
   star.position.set(x, y, z);
   
   star.userData.phase = Math.random() * Math.PI * 2;
@@ -91,8 +178,37 @@ function addPulsingStar() {
   pulsingStars.push(star);
 }
 
-Array(200).fill().forEach(addBasicStar);
-Array(20).fill().forEach(addPulsingStar);
+// creates the regular and pulsing stars in the scene
+Array(400).fill().forEach(addBasicStar);
+Array(40).fill().forEach(addPulsingStar);
+
+// handles window resizing
+window.addEventListener('resize', onWindowResize, false);
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  labelRenderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function render() {
+  // find intersections
+
+  raycaster.setFromCamera( pointer, camera );
+  const intersects = raycaster.intersectObjects( planet.children, true );
+  if ( intersects.length > 0 ) {
+    console.log("intersect");
+    console.log(intersects);
+    
+  }
+
+  renderer.render( scene, camera );
+
+}
+
+
+
+
 
 function animate() {
   pulsingStars.forEach(star => {
@@ -100,15 +216,17 @@ function animate() {
     const scale = star.userData.baseScale + Math.sin(star.userData.phase) * star.userData.pulseScale;
     star.scale.set(scale, scale, scale);
   });
+  if (!isDragging) {
+      planet.rotateY(0.002);
+  }
+  render();
 
   requestAnimationFrame(animate)
   controls.update()
   renderer.render(scene, camera)
-  planet.rotateY(0.005);
+  labelRenderer.render(scene, camera); 
+  
 }
 
 animate()
-
-
-
 

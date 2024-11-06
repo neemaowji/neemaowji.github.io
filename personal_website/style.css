@@ -3,3 +3,16 @@ canvas{
   top: 0;
   left: 0;
 }
+
+.label {
+  color: #ffffff;
+  padding: 2px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: transform 0.2s ease-out; /* Smooth scaling transition */
+  transform-origin: center;
+}
