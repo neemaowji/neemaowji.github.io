@@ -28,16 +28,7 @@ const planet = new THREE.Mesh( geometry, material );
 scene.add( planet );
 planet.rotateZ(6);
 
-function addFlag(){
-  const geometry = new THREE.SphereGeometry(0.25, 24, 24);
-  const material = new THREE.MeshStandardMaterial({color: 0xffffff});
-  const star = new THREE.Mesh(geometry, material);
-  const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(500));
-  star.position.set(x, y, z);
-  scene.add(star);
-}
-
-function addPinToSphere(radius, height, radiusTop, radiusBottom) {
+function addPinToSphere(radius, height, radiusTop, radiusBottom, division, num) {
   const cylGeometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, 32);
   const cylMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
   const cylinder = new THREE.Mesh(cylGeometry, cylMaterial);
@@ -45,34 +36,28 @@ function addPinToSphere(radius, height, radiusTop, radiusBottom) {
   const sphGeometry = new THREE.SphereGeometry(2, 10, 10);
   const sphMaterial = new THREE.MeshStandardMaterial({color: 0xff0000});
   const sphere = new THREE.Mesh(sphGeometry, sphMaterial);
+  
 
-  // Position the cylinder on the sphere’s surface
-  const theta = Math.random() * Math.PI * 2; // Random angle around the sphere
-  const phi = Math.random() * Math.PI;       // Random angle from pole to pole
+  const theta = (num/division) * Math.PI * 2;
+  const phi = ((Math.random() *0.5) + 0.3) * Math.PI;
 
-  // Calculate position on the sphere using spherical coordinates
+  sphere.position.set(0, height / 2, 0);
   cylinder.position.set(
     radius * Math.sin(phi) * Math.cos(theta),
     radius * Math.sin(phi) * Math.sin(theta),
     radius * Math.cos(phi)
   );
 
-  // Make cylinder stand upright by aligning its rotation with the sphere's center
-  const up = new THREE.Vector3(0, 1, 0); // Cylinder's default upward direction
+  const up = new THREE.Vector3(0, 1, 0);
   const direction = new THREE.Vector3().subVectors(cylinder.position, sphere.position).normalize();
   cylinder.quaternion.setFromUnitVectors(up, direction);
 
-  sphere.position.set(0, height / 2, 0);
-
   cylinder.add(sphere);
-
-  // Attach the cylinder to the sphere so it rotates along with it
   planet.add(cylinder);
 }
 
-// Add multiple cylinders to the sphere
-for (let i = 0; i < 10; i++) {
-  addPinToSphere(50, 10, 1, 1); // Adjust dimensions as needed
+for (let i = 0; i < 3; i++) {
+  addPinToSphere(50, 10, 1, 1, 3, i);
 }
 
 
@@ -82,6 +67,7 @@ function addBasicStar(){
   const geometry = new THREE.SphereGeometry(0.25, 24, 24);
   const material = new THREE.MeshStandardMaterial({color: 0xffffff});
   const star = new THREE.Mesh(geometry, material);
+
   const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(500));
   star.position.set(x, y, z);
   scene.add(star);
@@ -96,10 +82,10 @@ function addPulsingStar() {
   const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(500));
   star.position.set(x, y, z);
   
-  star.userData.phase = Math.random() * Math.PI * 2; // Random starting phase
-  star.userData.speed = 0.02 + Math.random() * 0.01; // Random speed
+  star.userData.phase = Math.random() * Math.PI * 2;
+  star.userData.speed = 0.02 + Math.random() * 0.01;
   star.userData.baseScale = 1;
-  star.userData.pulseScale = 0.5; // How much it will pulse
+  star.userData.pulseScale = 0.5;
   
   scene.add(star);
   pulsingStars.push(star);
