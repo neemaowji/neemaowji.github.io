@@ -73,21 +73,32 @@ controls.maxPolarAngle = Math.PI * 0.75;
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 
+const activePointers = new Map();
 
 renderer.domElement.addEventListener('pointerdown', (e) => {
-  if ((e.pointerType === 'touch' && e.isPrimary) || e.pointerType === 'mouse') {
+  activePointers.set(e.pointerId, e);
+  if (activePointers.size === 1) {
     isDragging = true;
     previousMousePosition = {
         x: e.clientX,
         y: e.clientY
     };
   }
+  else{
+    isDragging = false;
+  }
   if(INTERSECTED){
     console.log(INTERSECTED.userData.name);
   }
 });
 
-renderer.domElement.addEventListener('pointerup', () => {
+renderer.domElement.addEventListener('pointerup', (e) => {
+  activePointers.delete(e.pointerId);
+  isDragging = false;
+});
+
+renderer.domElement.addEventListener('pointercancel', (e) => {
+  activePointers.delete(e.pointerId);
   isDragging = false;
 });
 
@@ -96,7 +107,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
   pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
   pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
-  if (isDragging) {
+  if (isDragging && activePointers.size === 1) {
     const deltaMove = {
       x: e.clientX - previousMousePosition.x,
       y: e.clientY - previousMousePosition.y,
