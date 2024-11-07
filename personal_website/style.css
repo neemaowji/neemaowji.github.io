@@ -13,6 +13,6 @@ canvas{
   font-size: 12px;
   white-space: nowrap;
   pointer-events: none;
-  transition: transform 0.2s ease-out; /* Smooth scaling transition */
+  transition: transform 0.2s ease-out;
   transform-origin: center;
 }

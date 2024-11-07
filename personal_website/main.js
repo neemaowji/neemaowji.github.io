@@ -6,7 +6,7 @@ import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.set(100,100,100);
+camera.position.set(600,600,600);
 const renderer = new THREE.WebGLRenderer({
   canvas: document.querySelector('#bg'),
 });
@@ -24,6 +24,7 @@ labelRenderer.domElement.style.left = '0';
 document.body.appendChild(labelRenderer.domElement);
 labelRenderer.domElement.style.pointerEvents = 'none'
 
+let INTERSECTED;
 
 const light = new THREE.PointLight(0xffffff, 50, 0, 1);
 light.position.set(70,0,70);
@@ -31,7 +32,7 @@ light.position.set(70,0,70);
 const ambientLight = new THREE.AmbientLight(0xaaaaaa)
 scene.add(light, ambientLight);
 
-const geometry = new THREE.SphereGeometry( 50, 10, 10 ); 
+const geometry = new THREE.SphereGeometry(50, 20, 20); 
 const material = new THREE.MeshStandardMaterial( { color: 0x00FFA1, wireframe:false} ); 
 const planet = new THREE.Mesh( geometry, material ); 
 scene.add( planet );
@@ -47,8 +48,8 @@ let previousMousePosition = {
     x: 0,
     y: 0
 };
-controls.minDistance = 100;
-controls.maxDistance = 400;
+controls.minDistance = 150;
+controls.maxDistance = 600;
 controls.minPolarAngle = Math.PI * 0.25;
 controls.maxPolarAngle = Math.PI * 0.75;
 controls.enableDamping = true;
@@ -69,6 +70,9 @@ renderer.domElement.addEventListener('mouseup', () => {
 // rotates only the planet when the user drags the mouse
 const rotationSpeed = 0.01;
 renderer.domElement.addEventListener('mousemove', (e) => {
+  pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
   if (isDragging) {
     const deltaMove = {
       x: e.clientX - previousMousePosition.x,
@@ -100,6 +104,9 @@ renderer.domElement.addEventListener('mousemove', (e) => {
 window.addEventListener('click', (event) => {
   pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
   pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  if(INTERSECTED != null){
+    console.log(INTERSECTED.userData.name);
+  }
 });
 
 const pins = [];
@@ -131,7 +138,8 @@ function addPinToSphere(radius, height, radiusTop, radiusBottom, division, num, 
   labelDiv.textContent = labelText;
   const label = new CSS2DObject(labelDiv);
   label.position.set(0, height/2 + 4, 0);
-
+  cylinder.userData.name = labelText;
+  sphere.userData.name = labelText;
 
 
   sphere.add(label);
@@ -155,7 +163,7 @@ function addBasicStar(){
   const material = new THREE.MeshStandardMaterial({color: 0xffffff});
   const star = new THREE.Mesh(geometry, material);
 
-  const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(400));
+  const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(800));
   star.position.set(x, y, z);
   scene.add(star);
 }
@@ -166,7 +174,7 @@ function addPulsingStar() {
   const material = new THREE.MeshBasicMaterial({color: 0xffff00});
   const star = new THREE.Mesh(geometry, material);
   
-  const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(400));
+  const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(800));
   star.position.set(x, y, z);
   
   star.userData.phase = Math.random() * Math.PI * 2;
@@ -179,8 +187,8 @@ function addPulsingStar() {
 }
 
 // creates the regular and pulsing stars in the scene
-Array(400).fill().forEach(addBasicStar);
-Array(40).fill().forEach(addPulsingStar);
+Array(800).fill().forEach(addBasicStar);
+Array(80).fill().forEach(addPulsingStar);
 
 // handles window resizing
 window.addEventListener('resize', onWindowResize, false);
@@ -191,19 +199,32 @@ function onWindowResize() {
   labelRenderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+// determines when pins are clicked and when to show labels
 function render() {
-  // find intersections
-
   raycaster.setFromCamera( pointer, camera );
-  const intersects = raycaster.intersectObjects( planet.children, true );
+  const intersects = raycaster.intersectObjects( pins, true );
   if ( intersects.length > 0 ) {
-    console.log("intersect");
-    console.log(intersects);
-    
+    document.body.style.cursor = 'pointer';
+    if ( INTERSECTED != intersects[ 0 ].object ) {
+      INTERSECTED = intersects[ 0 ].object;
+    }
+
+  } else {
+    INTERSECTED = null;
+    document.body.style.cursor = 'default';
   }
 
-  renderer.render( scene, camera );
+  planet.traverse((child) => {
+    if (child instanceof CSS2DObject) {
+      const worldPos = new THREE.Vector3();
+      child.getWorldPosition(worldPos);
+      const distance = camera.position.distanceTo(worldPos);
+      child.visible = distance < 175;
+    }
+  });
 
+  labelRenderer.render(scene, camera);
+  renderer.render( scene, camera );
 }
 
 
@@ -225,7 +246,7 @@ function animate() {
   controls.update()
   renderer.render(scene, camera)
   labelRenderer.render(scene, camera); 
-  
+
 }
 
 animate()
