@@ -48,6 +48,13 @@ let previousMousePosition = {
     x: 0,
     y: 0
 };
+let isTouching = false;
+let previousTouchPosition = {
+    x: 0,
+    y: 0
+};
+
+
 controls.minDistance = 150;
 controls.maxDistance = 600;
 controls.minPolarAngle = Math.PI * 0.25;
@@ -55,21 +62,24 @@ controls.maxPolarAngle = Math.PI * 0.75;
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 
-renderer.domElement.addEventListener('mousedown', (e) => {
+
+renderer.domElement.addEventListener('pointerdown', (e) => {
   isDragging = true;
   previousMousePosition = {
       x: e.clientX,
       y: e.clientY
   };
+  console.log("down");
 });
 
-renderer.domElement.addEventListener('mouseup', () => {
+renderer.domElement.addEventListener('pointerup', () => {
   isDragging = false;
+  console.log("up");
 });
 
-// rotates only the planet when the user drags the mouse
 const rotationSpeed = 0.01;
-renderer.domElement.addEventListener('mousemove', (e) => {
+renderer.domElement.addEventListener('pointermove', (e) => {
+  console.log("move");
   pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
   pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
@@ -98,14 +108,6 @@ renderer.domElement.addEventListener('mousemove', (e) => {
       x: e.clientX,
       y: e.clientY,
     };
-  }
-});
-
-window.addEventListener('click', (event) => {
-  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
-  if(INTERSECTED != null){
-    console.log(INTERSECTED.userData.name);
   }
 });
 
