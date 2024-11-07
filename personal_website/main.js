@@ -6,7 +6,7 @@ import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.set(600,600,600);
+camera.position.set(600,200,600);
 const renderer = new THREE.WebGLRenderer({
   canvas: document.querySelector('#bg'),
 });
@@ -118,7 +118,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
     orbitValue += 0.006 * deltaMove.x;
     moon.position.set(
       Math.cos(orbitValue) * orbitRadius,
-      0,
+      Math.sin(orbitValue) * orbitRadius * 0.4,
       Math.sin(orbitValue) * orbitRadius
     );
 
@@ -169,11 +169,20 @@ function addPinToSphere(radius, height, radiusTop, radiusBottom, division, num, 
   pins.push(sphere);
 
 }
+const moonLabelDiv = document.createElement('div');
+moonLabelDiv.className = 'label';
+moonLabelDiv.textContent = "Resume";
+const moonLabel = new CSS2DObject(moonLabelDiv);
+moon.add(moonLabel);
+moon.userData.name = "Resume"
+pins.push(moon);
 
 // adding pins that represent pages
-addPinToSphere(50, 10, 0.5, 0.5, 3, 1, "About Me");
-addPinToSphere(50, 10, 0.5, 0.5, 3, 2, "Porfolio");
-addPinToSphere(50, 10, 0.5, 0.5, 3, 3, "Contact");
+addPinToSphere(50, 10, 0.5, 0.2, 3, 1, "About Me");
+addPinToSphere(50, 10, 0.5, 0.2, 3, 2, "Porfolio");
+addPinToSphere(50, 10, 0.5, 0.2, 3, 3, "Contact");
+const axesHelper = new THREE.AxesHelper(500);
+scene.add( axesHelper );
 
 
 
@@ -243,6 +252,14 @@ function render() {
       child.visible = distance < 175;
     }
   });
+  moon.traverse((child) => {
+    if (child instanceof CSS2DObject) {
+      const worldPos = new THREE.Vector3();
+      child.getWorldPosition(worldPos);
+      const distance = camera.position.distanceTo(worldPos);
+      child.visible = distance < 200;
+    }
+  });
 
   labelRenderer.render(scene, camera);
   renderer.render( scene, camera );
@@ -264,7 +281,7 @@ function animate() {
       orbitValue += 0.006;
       moon.position.set(
         Math.cos(orbitValue) * orbitRadius,
-        0,
+        Math.sin(orbitValue) * orbitRadius * 0.4,
         Math.sin(orbitValue) * orbitRadius
       );
 
