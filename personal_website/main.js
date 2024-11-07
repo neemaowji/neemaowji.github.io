@@ -53,18 +53,18 @@ scene.add(moon);
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.enablePan = false;
 controls.enableRotate = false;
+controls.enableZoom = true;
+controls.zoomSpeed = 0.5;
 let isDragging = false;
 const pointer = new THREE.Vector2();
 let previousMousePosition = {
     x: 0,
     y: 0
 };
-let isTouching = false;
-let previousTouchPosition = {
-    x: 0,
-    y: 0
+controls.touches = {
+  ONE: THREE.TOUCH.ROTATE,
+  TWO: THREE.TOUCH.DOLLY
 };
-
 
 controls.minDistance = 150;
 controls.maxDistance = 600;
@@ -75,11 +75,13 @@ controls.dampingFactor = 0.05;
 
 
 renderer.domElement.addEventListener('pointerdown', (e) => {
-  isDragging = true;
-  previousMousePosition = {
-      x: e.clientX,
-      y: e.clientY
-  };
+  if ((e.pointerType === 'touch' && e.isPrimary) || e.pointerType === 'mouse') {
+    isDragging = true;
+    previousMousePosition = {
+        x: e.clientX,
+        y: e.clientY
+    };
+  }
   if(INTERSECTED){
     console.log(INTERSECTED.userData.name);
   }
