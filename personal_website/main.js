@@ -26,17 +26,28 @@ labelRenderer.domElement.style.pointerEvents = 'none'
 
 let INTERSECTED;
 
-const light = new THREE.PointLight(0xffffff, 50, 0, 1);
-light.position.set(70,0,70);
+const planetLight = new THREE.PointLight(0xffffff, 100, 0, 1);
+planetLight.position.set(70,35,70);
+
+const moonLight = new THREE.PointLight(0xffffff, 100, 0, 1);
+var orbitRadius = 70; // for example
+var orbitValue = 0;
 
 const ambientLight = new THREE.AmbientLight(0xaaaaaa)
-scene.add(light, ambientLight);
+scene.add(planetLight, moonLight, ambientLight);
 
-const geometry = new THREE.SphereGeometry(50, 20, 20); 
-const material = new THREE.MeshStandardMaterial( { color: 0x00FFA1, wireframe:false} ); 
-const planet = new THREE.Mesh( geometry, material ); 
+const planetGeometry = new THREE.SphereGeometry(50, 20, 20); 
+const planetMaterial = new THREE.MeshStandardMaterial( { color: 0x00FFA1, wireframe:false} ); 
+const planet = new THREE.Mesh(planetGeometry, planetMaterial); 
 scene.add( planet );
 planet.rotateZ(6);
+
+const moonGeometry = new THREE.SphereGeometry(10, 20, 20); 
+const moonMaterial = new THREE.MeshStandardMaterial({ color: 0x999999, wireframe:false}); 
+const moon = new THREE.Mesh(moonGeometry, moonMaterial); 
+moon.position.set(0, 50, 50)
+scene.add(moon);
+
 
 
 const controls = new OrbitControls( camera, renderer.domElement );
@@ -69,17 +80,17 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
       x: e.clientX,
       y: e.clientY
   };
-  console.log("down");
+  if(INTERSECTED){
+    console.log(INTERSECTED.userData.name);
+  }
 });
 
 renderer.domElement.addEventListener('pointerup', () => {
   isDragging = false;
-  console.log("up");
 });
 
 const rotationSpeed = 0.01;
 renderer.domElement.addEventListener('pointermove', (e) => {
-  console.log("move");
   pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
   pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
@@ -103,6 +114,13 @@ renderer.domElement.addEventListener('pointermove', (e) => {
 
     planet.quaternion.multiplyQuaternions(yRotation, planet.quaternion);
     planet.quaternion.multiplyQuaternions(xRotation, planet.quaternion);
+
+    orbitValue += 0.006 * deltaMove.x;
+    moon.position.set(
+      Math.cos(orbitValue) * orbitRadius,
+      0,
+      Math.sin(orbitValue) * orbitRadius
+    );
 
     previousMousePosition = {
       x: e.clientX,
@@ -209,6 +227,7 @@ function render() {
     document.body.style.cursor = 'pointer';
     if ( INTERSECTED != intersects[ 0 ].object ) {
       INTERSECTED = intersects[ 0 ].object;
+      //console.log(INTERSECTED.userData.name);
     }
 
   } else {
@@ -233,6 +252,7 @@ function render() {
 
 
 
+
 function animate() {
   pulsingStars.forEach(star => {
     star.userData.phase += star.userData.speed;
@@ -241,7 +261,15 @@ function animate() {
   });
   if (!isDragging) {
       planet.rotateY(0.002);
+      orbitValue += 0.006;
+      moon.position.set(
+        Math.cos(orbitValue) * orbitRadius,
+        0,
+        Math.sin(orbitValue) * orbitRadius
+      );
+
   }
+
   render();
 
   requestAnimationFrame(animate)
