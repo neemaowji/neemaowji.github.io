@@ -62,7 +62,7 @@ let previousMousePosition = {
     y: 0
 };
 controls.touches = {
-  ONE: THREE.TOUCH.ROTATE,
+  ONE: THREE.TOUCH.NONE,
   TWO: THREE.TOUCH.DOLLY
 };
 
