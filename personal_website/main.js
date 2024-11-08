@@ -63,7 +63,7 @@ let previousMousePosition = {
 };
 controls.touches = {
   ONE: THREE.TOUCH.NONE,
-  TWO: THREE.TOUCH.DOLLY
+  TWO: THREE.TOUCH.DOLLY_PAN
 };
 
 controls.minDistance = 150;
@@ -112,6 +112,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
       x: e.clientX - previousMousePosition.x,
       y: e.clientY - previousMousePosition.y,
     };
+    
 
     const yRotation = new THREE.Quaternion().setFromAxisAngle(
       new THREE.Vector3(0, 1, 0),
