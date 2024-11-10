@@ -2,6 +2,8 @@ import './style.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 
 const scene = new THREE.Scene();
@@ -23,6 +25,43 @@ labelRenderer.domElement.style.top = '0px';
 labelRenderer.domElement.style.left = '0'; 
 document.body.appendChild(labelRenderer.domElement);
 labelRenderer.domElement.style.pointerEvents = 'none'
+
+const loader = new FontLoader();
+
+loader.load('fonts/helvetiker_regular.typeface.json', function (font) {
+  const textGeometry = new TextGeometry('Welcome to Neema\'s world', {
+    font: font,
+    size: 15,
+    height: 5,
+    depth: 1
+  });
+
+  const textMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+  const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+
+  textMesh.position.set(350, 200, 140);
+  textMesh.rotateY(Math.PI * -3/2 - 0.15);
+  scene.add(textMesh);
+});
+
+loader.load('fonts/helvetiker_regular.typeface.json', function (font) {
+  const textGeometry = new TextGeometry('Scroll/Zoom for more', {
+    font: font,
+    size: 10,
+    height: 5,
+    depth: 1
+  });
+
+  const textMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+  const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+
+  textMesh.position.set(450, 120, 100);
+  textMesh.rotateY(Math.PI * -3/2 - 0.15);
+  scene.add(textMesh);
+});
+
+
+
 
 let INTERSECTED;
 
